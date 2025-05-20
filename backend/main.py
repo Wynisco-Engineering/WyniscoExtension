@@ -17,6 +17,8 @@ class SourceLocation(str, Enum):
     """Represents different types of sources for classification."""
     LINKEDIN = 'LinkedinExtension'
     INDEED = 'IndeedExtension'
+    GLASSDOOR = 'GlassdoorExtension'
+    
 
 # ---- Pydantic Model ----
 class ApplyLink(BaseModel):
@@ -30,7 +32,7 @@ class ApplyLink(BaseModel):
 # ---- In-memory storage ----
 applied: dict[int, ApplyLink] = {
     0: ApplyLink(Jobtitle='test1', JobLocation='test1', Employer='test1', Description='test1', JobUrl='test1', Source=SourceLocation.LINKEDIN),
-    1: ApplyLink(Jobtitle='test2', JobLocation='test2', Employer='test2', Description='test2', JobUrl='test2', Source=SourceLocation.LINKEDIN),
+    1: ApplyLink(Jobtitle='test2', JobLocation='test2', Employer='test2', Description='test2', JobUrl='test2', Source=SourceLocation.INDEED),
 }
 next_id = 2
 

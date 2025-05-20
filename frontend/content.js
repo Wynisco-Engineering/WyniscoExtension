@@ -136,7 +136,7 @@ function canonicalLinkedInJobUrl(url) {
         function extractIndeedJobDetails() {
             let jobTitleRaw = document.querySelector('[data-testid="jobsearch-JobInfoHeader-title"] span')?.childNodes[0]?.textContent.trim() || '';
             let jobTitle = jobTitleRaw.replace(/\s+-\s+job post$/, '');
-            let employer = document.querySelector('[data-testid="inlineHeader-companyName"] a')?.textContent.trim() || '';
+            let employer = document.querySelector('[data-testid="inlineHeader-companyName"] a')?.textContent.trim() || document.querySelector('[data-testid="inlineHeader-companyName"] span')?.textContent.trim() || '';
             let jobLocation = document.querySelector('[data-testid="inlineHeader-companyLocation"] div')?.textContent.trim() || '';
             let description = document.querySelector('#jobDescriptionText')?.textContent.trim() || '';
             let jobUrl = window.location.href;
