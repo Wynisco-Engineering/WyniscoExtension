@@ -16,7 +16,13 @@
   "web_accessible_resources": [
   {
     "resources": ["icon.png"],
-    "matches": ["https://www.linkedin.com/*","https://in.indeed.com/*"]
+    "matches": [
+        "https://www.linkedin.com/*",
+        "https://*.indeed.com/*",
+        "https://www.glassdoor.com/*",
+        "https://www.glassdoor.co.in/*"
+      ],
+    "use_dynamic_url": true
   }
 ]
 }
