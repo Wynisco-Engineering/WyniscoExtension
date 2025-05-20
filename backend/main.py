@@ -1,42 +1,57 @@
 from enum import Enum
 from fastapi import HTTPException, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 app = FastAPI()
 
-class SourceLocation(Enum):
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # For development; restrict in production!
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+class SourceLocation(str, Enum):
     """Represents different types of sources for classification."""
     LINKEDIN = 'LinkedinExtension'
 
+# ---- Pydantic Model ----
 class ApplyLink(BaseModel):
     Jobtitle: str
     JobLocation: str
-    Employer:str
+    Employer: str
     description: str
     JobUrl: str
     source: SourceLocation
 
-applied = {
+# ---- In-memory storage ----
+applied: dict[int, ApplyLink] = {
     0: ApplyLink(Jobtitle='test1', JobLocation='test1', Employer='test1', description='test1', JobUrl='test1', source=SourceLocation.LINKEDIN),
     1: ApplyLink(Jobtitle='test2', JobLocation='test2', Employer='test2', description='test2', JobUrl='test2', source=SourceLocation.LINKEDIN),
 }
 next_id = 2
 
-@app.get('/appliedlinks/{job_id}')
-def get_job_by_id(job_id: int) -> ApplyLink:
+# ---- Get job by ID ----
+@app.get('/appliedlinks/{job_id}', response_model=ApplyLink)
+def get_job_by_id(job_id: int):
     if job_id not in applied:
-        raise HTTPException(status_code = 404, detail = f'ID {job_id} does not exist')
-    return ApplyLink[job_id]
+        raise HTTPException(status_code=404, detail=f'ID {job_id} does not exist')
+    return applied[job_id]
 
+# ---- List all applied jobs ----
 @app.get('/')
-def index() -> dict[str, dict[int,ApplyLink]]:
-    return {'applied': applied}
+def index():
+    return {'applied': {k: v.dict() for k, v in applied.items()}}
 
-@app.post('/')
-def create_apply(job:ApplyLink) -> dict[str,ApplyLink]:
-    if job.id in applied:
-        raise HTTPException(status_code=400,detail = f'Already Applied for {job.Jobtitle}')
-    
-    applied[job.id]  = job
-    return {'applied': applied}
-
+# ---- Create a new application ----
+@app.post('/', response_model=ApplyLink)
+def create_apply(job: ApplyLink):
+    global next_id
+    # Prevent duplicate JobUrl
+    if any(existing.JobUrl == job.JobUrl for existing in applied.values()):
+        raise HTTPException(status_code=400, detail=f'Already Applied for {job.Jobtitle}')
+    applied[next_id] = job
+    next_id += 1
+    return job
