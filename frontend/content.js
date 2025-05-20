@@ -1,34 +1,28 @@
 function canonicalLinkedInJobUrl(url) {
     try {
         const u = new URL(url);
-
-        // Case 1: /jobs/view/<jobid>/
         const viewMatch = u.pathname.match(/^\/jobs\/view\/(\d+)/);
         if (viewMatch) {
-            const jobId = viewMatch[1];
-            return `https://www.linkedin.com/jobs/view/${jobId}/`;
+            return `https://www.linkedin.com/jobs/view/${viewMatch[1]}/`;
         }
-
-        // Case 2: /jobs/search/?currentJobId=<jobid>
         if (u.pathname.startsWith('/jobs/search/')) {
             const jobId = u.searchParams.get('currentJobId');
             if (jobId) {
                 return `https://www.linkedin.com/jobs/view/${jobId}/`;
             }
         }
-    } catch (e) {
-        return null;
-    }
-    return null;
+    } catch (e) {}
+    return url;
 }
-
 (function() {
     const hostname = window.location.hostname;
     console.log("Job Extractor content script loaded on", hostname);
 
+    if (document.getElementById('fixed-right-image-btn')) return;
+
     if (hostname.includes('linkedin.com')) {
         injectLinkedInButton();
-    } else if (hostname.includes('indeed.com')){
+    } else if (hostname.includes('indeed.com')) {
         injectIndeedButton();
     }
 
@@ -60,20 +54,13 @@ function canonicalLinkedInJobUrl(url) {
         document.body.appendChild(btn);
 
         function extractLinkedInJobDetails() {
-            let jobTitle = document.querySelector('div.t-24.job-details-jobs-unified-top-card__job-title h1 a')?.textContent.trim() ||
-                        document.querySelector('div.t-24.job-details-jobs-unified-top-card__job-title h1')?.textContent.trim() || '';
-
+            let jobTitle = document.querySelector('div.t-24.job-details-jobs-unified-top-card__job-title h1 a')?.textContent.trim()
+                || document.querySelector('div.t-24.job-details-jobs-unified-top-card__job-title h1')?.textContent.trim() || '';
             let employer = document.querySelector('div.job-details-jobs-unified-top-card__company-name a')?.textContent.trim() || '';
-
             let jobLocation = document.querySelector('div.job-details-jobs-unified-top-card__tertiary-description-container span.tvm__text--low-emphasis')?.textContent.trim() || '';
-
             let description = document.querySelector('div.jobs-description__content')?.textContent.trim() || '';
+            let jobUrl = canonicalLinkedInJobUrl(window.location.href);
 
-            let jobUrl = window.location.href;
-            let cleanedUrl = canonicalLinkedInJobUrl(jobUrl);
-            if (cleanedUrl) {
-                jobUrl = cleanedUrl;
-            }
             return {
                 Jobtitle: jobTitle,
                 JobLocation: jobLocation,
@@ -84,7 +71,6 @@ function canonicalLinkedInJobUrl(url) {
             };
         }
 
-        // 3. Button click handler
         btn.onclick = () => {
             const details = extractLinkedInJobDetails();
             console.log('Job details:', details);
@@ -92,28 +78,34 @@ function canonicalLinkedInJobUrl(url) {
                 alert('Could not extract job details. Please ensure you are on a LinkedIn job page.');
                 return;
             }
-
             fetch('http://localhost:8000/', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(details)
             })
-            .then(response => {
+            .then(async response => {
                 if (response.ok) {
                     alert('Job details sent!');
                 } else if (response.status === 400) {
-                    alert('Job already applied for.');
-                }
-                    
-                else{
-                    alert('Failed to send job details.');
+                    let msg = 'Job already applied for.';
+                    try {
+                        const data = await response.json();
+                        if (data && data.detail) msg = data.detail;
+                    } catch (e) {}
+                    alert(msg);
+                } else {
+                    let msg = 'Failed to send job details.';
+                    try {
+                        const data = await response.json();
+                        if (data && data.detail) msg = data.detail;
+                    } catch (e) {}
+                    alert(msg);
                 }
             })
             .catch(() => alert('Network error sending job details.'));
         };
-        
-
     }
+
     function injectIndeedButton() {
         const btn = document.createElement('button');
         btn.id = 'fixed-right-image-btn';
@@ -142,15 +134,11 @@ function canonicalLinkedInJobUrl(url) {
         document.body.appendChild(btn);
 
         function extractIndeedJobDetails() {
-            /*let jobTitle = document.querySelector('div.t-24.job-details-jobs-unified-top-card__job-title h1 a')?.textContent.trim() ||
-                        document.querySelector('div.t-24.job-details-jobs-unified-top-card__job-title h1')?.textContent.trim() || '';
-
-            let employer = document.querySelector('div.job-details-jobs-unified-top-card__company-name a')?.textContent.trim() || '';
-
-            let jobLocation = document.querySelector('div.job-details-jobs-unified-top-card__tertiary-description-container span.tvm__text--low-emphasis')?.textContent.trim() || '';
-
-            let description = document.querySelector('div.jobs-description__content')?.textContent.trim() || '';
-
+            let jobTitleRaw = document.querySelector('[data-testid="jobsearch-JobInfoHeader-title"] span')?.childNodes[0]?.textContent.trim() || '';
+            let jobTitle = jobTitleRaw.replace(/\s+-\s+job post$/, '');
+            let employer = document.querySelector('[data-testid="inlineHeader-companyName"] a')?.textContent.trim() || '';
+            let jobLocation = document.querySelector('[data-testid="inlineHeader-companyLocation"] div')?.textContent.trim() || '';
+            let description = document.querySelector('#jobDescriptionText')?.textContent.trim() || '';
             let jobUrl = window.location.href;
 
             return {
@@ -160,14 +148,41 @@ function canonicalLinkedInJobUrl(url) {
                 description: description,
                 JobUrl: jobUrl,
                 source: 'IndeedExtension'
-            };*/
+            };
         }
 
-        // 3. Button click handler
         btn.onclick = () => {
-            
+            const details = extractIndeedJobDetails();
+            console.log('Job details:', details);
+            if (!details.Jobtitle || !details.Employer || !details.JobUrl) {
+                alert('Could not extract job details. Please ensure you are on an Indeed job page.');
+                return;
+            }
+            fetch('http://localhost:8000/', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(details)
+            })
+            .then(async response => {
+                if (response.ok) {
+                    alert('Job details sent!');
+                } else if (response.status === 400) {
+                    let msg = 'Job already applied for.';
+                    try {
+                        const data = await response.json();
+                        if (data && data.detail) msg = data.detail;
+                    } catch (e) {}
+                    alert(msg);
+                } else {
+                    let msg = 'Failed to send job details.';
+                    try {
+                        const data = await response.json();
+                        if (data && data.detail) msg = data.detail;
+                    } catch (e) {}
+                    alert(msg);
+                }
+            })
+            .catch(() => alert('Network error sending job details.'));
         };
-        
-
     }
 })();

@@ -16,20 +16,21 @@ app.add_middleware(
 class SourceLocation(str, Enum):
     """Represents different types of sources for classification."""
     LINKEDIN = 'LinkedinExtension'
+    INDEED = 'IndeedExtension'
 
 # ---- Pydantic Model ----
 class ApplyLink(BaseModel):
     Jobtitle: str
     JobLocation: str
     Employer: str
-    description: str
+    Description: str
     JobUrl: str
     source: SourceLocation
 
 # ---- In-memory storage ----
 applied: dict[int, ApplyLink] = {
-    0: ApplyLink(Jobtitle='test1', JobLocation='test1', Employer='test1', description='test1', JobUrl='test1', source=SourceLocation.LINKEDIN),
-    1: ApplyLink(Jobtitle='test2', JobLocation='test2', Employer='test2', description='test2', JobUrl='test2', source=SourceLocation.LINKEDIN),
+    0: ApplyLink(Jobtitle='test1', JobLocation='test1', Employer='test1', Description='test1', JobUrl='test1', source=SourceLocation.LINKEDIN),
+    1: ApplyLink(Jobtitle='test2', JobLocation='test2', Employer='test2', Description='test2', JobUrl='test2', source=SourceLocation.LINKEDIN),
 }
 next_id = 2
 
@@ -45,11 +46,9 @@ def get_job_by_id(job_id: int):
 def index():
     return {'applied': {k: v.dict() for k, v in applied.items()}}
 
-# ---- Create a new application ----
 @app.post('/', response_model=ApplyLink)
 def create_apply(job: ApplyLink):
     global next_id
-    # Prevent duplicate JobUrl
     if any(existing.JobUrl == job.JobUrl for existing in applied.values()):
         raise HTTPException(status_code=400, detail=f'Already Applied for {job.Jobtitle}')
     applied[next_id] = job
