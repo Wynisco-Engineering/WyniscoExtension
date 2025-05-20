@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "CompanyName Widget",
+  "name": "Wynisco Widget",
   "version": "1.0",
-  "description": "",
+  "description": "Posts Job listings",
   "content_scripts": [
     {
       "matches": [

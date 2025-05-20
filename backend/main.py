@@ -17,7 +17,6 @@ class SourceLocation(str, Enum):
     """Represents different types of sources for classification."""
     LINKEDIN = 'LinkedinExtension'
     INDEED = 'IndeedExtension'
-    GLASSDOOR = 'GlassdoorExtension'
     
 
 # ---- Pydantic Model ----
