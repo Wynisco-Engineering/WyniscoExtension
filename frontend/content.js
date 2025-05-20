@@ -1,4 +1,3 @@
-// 1. Create and inject a fixed image button
 const btn = document.createElement('button');
 btn.id = 'fixed-right-image-btn';
 btn.title = 'Send job details to backend';
@@ -25,14 +24,13 @@ Object.assign(btn.style, {
 
 document.body.appendChild(btn);
 
-// 2. Extract job details from LinkedIn job page
 function extractLinkedInJobDetails() {
     let jobTitle = document.querySelector('div.t-24.job-details-jobs-unified-top-card__job-title h1 a')?.textContent.trim() ||
                    document.querySelector('div.t-24.job-details-jobs-unified-top-card__job-title h1')?.textContent.trim() || '';
 
     let employer = document.querySelector('div.job-details-jobs-unified-top-card__company-name a')?.textContent.trim() || '';
 
-    let jobLocation = document.querySelector('span.tvm__text.tvm__text--low-emphasis')?.textContent.trim() || '';
+    let jobLocation = document.querySelector('div.job-details-jobs-unified-top-card__tertiary-description-container span.tvm__text--low-emphasis')?.textContent.trim() || '';
 
     let description = document.querySelector('div.jobs-description__content')?.textContent.trim() || '';
 
@@ -52,7 +50,6 @@ function extractLinkedInJobDetails() {
 btn.onclick = () => {
     const details = extractLinkedInJobDetails();
     console.log('Job details:', details);
-    // Basic validation
     if (!details.Jobtitle || !details.Employer || !details.JobUrl) {
         alert('Could not extract job details. Please ensure you are on a LinkedIn job page.');
         return;
