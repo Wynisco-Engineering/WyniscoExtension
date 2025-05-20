@@ -14,6 +14,16 @@ function canonicalLinkedInJobUrl(url) {
     } catch (e) {}
     return url;
 }
+function canonicalIndeedJobUrl(url) {
+    try {
+        const u = new URL(url);
+        const jobKey = u.searchParams.get('vjk');
+        if (jobKey) {
+            return `https://${u.hostname}/viewjob?jk=${jobKey}`;
+        }
+    } catch (e) {}
+    return url;
+}
 (function() {
     const hostname = window.location.hostname;
     console.log("Job Extractor content script loaded on", hostname);
@@ -139,7 +149,7 @@ function canonicalLinkedInJobUrl(url) {
             let employer = document.querySelector('[data-testid="inlineHeader-companyName"] a')?.textContent.trim() || document.querySelector('[data-testid="inlineHeader-companyName"] span')?.textContent.trim() || '';
             let jobLocation = document.querySelector('[data-testid="inlineHeader-companyLocation"] div')?.textContent.trim() || '';
             let description = document.querySelector('#jobDescriptionText')?.textContent.trim() || '';
-            let jobUrl = window.location.href;
+            let jobUrl = canonicalIndeedJobUrl(window.location.href);
 
             return {
                 Jobtitle: jobTitle,
