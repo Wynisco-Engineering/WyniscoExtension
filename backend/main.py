@@ -25,12 +25,12 @@ class ApplyLink(BaseModel):
     Employer: str
     Description: str
     JobUrl: str
-    source: SourceLocation
+    Source: SourceLocation
 
 # ---- In-memory storage ----
 applied: dict[int, ApplyLink] = {
-    0: ApplyLink(Jobtitle='test1', JobLocation='test1', Employer='test1', Description='test1', JobUrl='test1', source=SourceLocation.LINKEDIN),
-    1: ApplyLink(Jobtitle='test2', JobLocation='test2', Employer='test2', Description='test2', JobUrl='test2', source=SourceLocation.LINKEDIN),
+    0: ApplyLink(Jobtitle='test1', JobLocation='test1', Employer='test1', Description='test1', JobUrl='test1', Source=SourceLocation.LINKEDIN),
+    1: ApplyLink(Jobtitle='test2', JobLocation='test2', Employer='test2', Description='test2', JobUrl='test2', Source=SourceLocation.LINKEDIN),
 }
 next_id = 2
 

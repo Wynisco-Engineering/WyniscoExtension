@@ -65,9 +65,9 @@ function canonicalLinkedInJobUrl(url) {
                 Jobtitle: jobTitle,
                 JobLocation: jobLocation,
                 Employer: employer,
-                description: description,
+                Description: description,
                 JobUrl: jobUrl,
-                source: 'LinkedinExtension'
+                Source: 'LinkedinExtension'
             };
         }
 
@@ -145,9 +145,9 @@ function canonicalLinkedInJobUrl(url) {
                 Jobtitle: jobTitle,
                 JobLocation: jobLocation,
                 Employer: employer,
-                description: description,
+                Description: description,
                 JobUrl: jobUrl,
-                source: 'IndeedExtension'
+                Source: 'IndeedExtension'
             };
         }
 
