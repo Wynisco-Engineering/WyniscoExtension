@@ -30,6 +30,19 @@ function canonicalIndeedJobUrl(url) {
     return url;
 }
 
+function canonicalSimplyHiredJobUrl(url) {
+    try {
+        const u = new URL(url);
+        const jobId = u.searchParams.get('job');
+        if (jobId) {
+            return `https://${u.hostname}/job/${jobId}`;
+        }
+    } catch (e) {
+        console.error("Error in canonicalSimplyHiredJobUrl:", e);
+    }
+    return url;
+}
+
 function appendJobToLocalStorage(details) {
     const key = 'job_details_csv';
     const csvRow = [
@@ -75,6 +88,8 @@ function downloadCSVFromLocalStorage() {
         injectIndeedButton();
     } else if (hostname.includes('jobright.ai')){
         injectJobRightButton();
+    } else if(hostname.includes('simplyhired')){
+        injectSimplyHiredButton();
     }
 
     function createButtonContainer(mainBtn, downloadBtn) {
@@ -122,12 +137,12 @@ function downloadCSVFromLocalStorage() {
         createButtonContainer(btn, downloadBtn);
 
         function extractLinkedInJobDetails() {
-            let jobTitle = document.querySelector('.job-details-jobs-unified-top-card__job-title h1 a')?.textContent.trim()
+            const jobTitle = document.querySelector('.job-details-jobs-unified-top-card__job-title h1 a')?.textContent.trim()
                 || document.querySelector('.job-details-jobs-unified-top-card__job-title h1')?.textContent.trim() || '';
-            let employer = document.querySelector('div.job-details-jobs-unified-top-card__company-name a')?.textContent.trim() || '';
-            let jobLocation = document.querySelector('div.job-details-jobs-unified-top-card__tertiary-description-container span.tvm__text--low-emphasis')?.textContent.trim() || '';
-            let description = document.querySelector('div.jobs-description__content')?.textContent.trim() || '';
-            let jobUrl = canonicalLinkedInJobUrl(window.location.href);
+            const employer = document.querySelector('div.job-details-jobs-unified-top-card__company-name a')?.textContent.trim() || '';
+            const jobLocation = document.querySelector('div.job-details-jobs-unified-top-card__tertiary-description-container span.tvm__text--low-emphasis')?.textContent.trim() || '';
+            const description = document.querySelector('div.jobs-description__content')?.textContent.trim() || '';
+            const jobUrl = canonicalLinkedInJobUrl(window.location.href);
 
             return {
                 Jobtitle: jobTitle,
@@ -165,13 +180,13 @@ function downloadCSVFromLocalStorage() {
         createButtonContainer(btn, downloadBtn);
 
         function extractIndeedJobDetails() {
-            let jobTitleRaw = document.querySelector('[data-testid="jobsearch-JobInfoHeader-title"] span')?.childNodes[0]?.textContent.trim() || '';
-            let jobTitle = jobTitleRaw.replace(/\s+-\s+job post$/, '');
-            let employer = document.querySelector('[data-testid="inlineHeader-companyName"] a')?.textContent.trim()
+            const jobTitleRaw = document.querySelector('[data-testid="jobsearch-JobInfoHeader-title"] span')?.childNodes[0]?.textContent.trim() || '';
+            const jobTitle = jobTitleRaw.replace(/\s+-\s+job post$/, '');
+            const employer = document.querySelector('[data-testid="inlineHeader-companyName"] a')?.textContent.trim()
                 || document.querySelector('[data-testid="inlineHeader-companyName"] span')?.textContent.trim() || '';
-            let jobLocation = document.querySelector('[data-testid="inlineHeader-companyLocation"] div')?.textContent.trim() || '';
-            let description = document.querySelector('#jobDescriptionText')?.textContent.trim() || '';
-            let jobUrl = canonicalIndeedJobUrl(window.location.href);
+            const jobLocation = document.querySelector('[data-testid="inlineHeader-companyLocation"] div')?.textContent.trim() || '';
+            const description = document.querySelector('#jobDescriptionText')?.textContent.trim() || '';
+            const jobUrl = canonicalIndeedJobUrl(window.location.href);
 
             return {
                 Jobtitle: jobTitle,
@@ -237,5 +252,66 @@ function downloadCSVFromLocalStorage() {
                 Source: 'JobRightExtension'
             };
         }
+    }
+    function injectSimplyHiredButton() {
+        const btn = document.createElement('button');
+        btn.id = 'fixed-right-image-btn';
+        btn.title = 'Append job details to CSV';
+        btn.innerHTML = `<img src="${chrome.runtime.getURL('icon-round.png')}" alt="Send" style="width:32px;height:32px;pointer-events:none;">`;
+
+        const downloadBtn = document.createElement('button');
+        downloadBtn.id = 'download-csv-btn';
+        downloadBtn.title = 'Download CSV';
+        downloadBtn.textContent = 'Download CSV';
+
+        btn.onclick = () => {
+            const details = extractSimplyHiredJobDetails();
+            console.log(details);
+            if (!details.Jobtitle || !details.Employer || !details.JobUrl) {
+                alert('Could not extract job details. Please ensure you are on a SimplyHired job page.');
+                return;
+            }
+            appendJobToLocalStorage(details);
+            alert('Job details appended to CSV data! Hover and click ⬇️ Download CSV to download.');
+        };
+        downloadBtn.onclick = downloadCSVFromLocalStorage;
+
+        createButtonContainer(btn, downloadBtn);
+        function extractSimplyHiredJobDetails() {
+            const jobTitle = document.querySelector('[data-testid="viewJobTitle"]')?.textContent.trim() || '';
+            const employer = document.querySelector('[data-testid="viewJobCompanyName"] [data-testid="detailText"]')?.textContent.trim() || '';
+            const jobLocation = document.querySelector('[data-testid="viewJobCompanyLocation"] [data-testid="detailText"]')?.textContent.trim() || '';
+            function extractJobDescription(){
+                const descContainer = document.querySelector('[data-testid="viewJobBodyJobFullDescriptionContent"]');
+                if (!descContainer) return '';
+                let parts = [];
+                descContainer.querySelectorAll('p').forEach(p => {
+                    const text = p.textContent.trim();
+                    if (text) parts.push(text);
+                });
+                descContainer.querySelectorAll('ul').forEach(ul => {
+                    ul.querySelectorAll('li').forEach(li => {
+                        const text = li.textContent.trim();
+                        if (text) parts.push('• ' + text);
+                    });
+                });
+                if (parts.length === 0) {
+                    const fallback = descContainer.textContent.trim();
+                    if (fallback) parts.push(fallback);
+                }
+                return parts.join('\n');
+            }
+            const description = extractJobDescription();
+            const jobUrl = canonicalSimplyHiredJobUrl(window.location.href)
+
+            return {
+                Jobtitle: jobTitle,
+                JobLocation: jobLocation,
+                Employer: employer,
+                Description: description,
+                JobUrl: jobUrl,
+                Source: 'SimplyHiredExtension'
+            };
+        }   
     }
 })();
