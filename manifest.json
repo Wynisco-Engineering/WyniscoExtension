@@ -7,7 +7,8 @@
     {
       "matches": [
         "https://www.linkedin.com/*",
-        "https://*.indeed.com/*"
+        "https://*.indeed.com/*",
+        "https://jobright.ai/*"
       ],
       "js": ["content.js"],
       "css": ["content.css"]
@@ -29,7 +30,8 @@
       "resources": ["icon-round.png"],
       "matches": [
           "https://www.linkedin.com/*",
-          "https://*.indeed.com/*"
+          "https://*.indeed.com/*",
+          "https://jobright.ai/*"
         ],
       "use_dynamic_url": true
     }

@@ -185,7 +185,7 @@ function downloadCSVFromLocalStorage() {
     }
 
     function injectJobRightButton() {
-        /*const btn = document.createElement('button');
+        const btn = document.createElement('button');
         btn.id = 'fixed-right-image-btn';
         btn.title = 'Append job details to CSV';
         btn.innerHTML = `<img src="${chrome.runtime.getURL('icon-round.png')}" alt="Send" style="width:32px;height:32px;pointer-events:none;">`;
@@ -209,13 +209,25 @@ function downloadCSVFromLocalStorage() {
         createButtonContainer(btn, downloadBtn);
 
         function extractJobRightJobDetails() {
-            let jobTitle = document.querySelector('.job-details-jobs-unified-top-card__job-title h1 a')?.textContent.trim()
-                || document.querySelector('.job-details-jobs-unified-top-card__job-title h1')?.textContent.trim() || '';
-            let employer = document.querySelector('div.job-details-jobs-unified-top-card__company-name a')?.textContent.trim() || '';
-            let jobLocation = document.querySelector('div.job-details-jobs-unified-top-card__tertiary-description-container span.tvm__text--low-emphasis')?.textContent.trim() || '';
-            let description = document.querySelector('div.jobs-description__content')?.textContent.trim() || '';
-            let jobUrl = window.location.href;
+            const jobTitle = document.querySelector('.index_job-title__sStdA')?.textContent.trim() || '';
+            const employer = document.querySelector('.index_company-row__vOzgg strong')?.textContent.trim() || '';
+            const jobLocation = document.querySelector('.index_job-metadata-item__Wv_Xh img[alt="position"] + span')?.textContent.trim() || '';
+            
+            let overview = document.querySelector('.index_company-summary__8nWbU')?.innerText.trim() || '';
+            let responsibilityBullets = Array.from(document.querySelectorAll('section .index_listText__ENCyh'))
+            .map(el => '• ' + el.textContent.trim()).join('\n') || '';
 
+            let qualifications = '';
+            const qualificationBlocks = document.querySelectorAll('section#index_skills-section .index_listText__ENCyh')  || '';
+            if(qualificationBlocks.length>0){
+                qualifications = '\nQualifications:\n' + Array.from(qualificationBlocks).map(el => '• ' + el.textContent.trim()).join('\n');
+            }
+
+            let description = '';
+            if (overview) description += overview + '\n\n';
+            if (responsibilityBullets) description += 'Responsibilities:\n' + responsibilityBullets + '\n\n';
+            if (qualifications) description += qualifications;
+            const jobUrl = window.location.href;
             return {
                 Jobtitle: jobTitle,
                 JobLocation: jobLocation,
@@ -224,6 +236,6 @@ function downloadCSVFromLocalStorage() {
                 JobUrl: jobUrl,
                 Source: 'JobRightExtension'
             };
-        }*/
+        }
     }
 })();
