@@ -1,3 +1,4 @@
+
 function canonicalLinkedInJobUrl(url) {
     try {
         const u = new URL(url);
@@ -262,7 +263,7 @@ function canonicalSimplyHiredJobUrl(url) {
 
 function sendJobToBackend(details) {
     console.log(details)
-    fetch('http://127.0.0.1:8000/api/v1/jobs/', {
+    fetch('https://backend-dot-student-marketing-operations.el.r.appspot.com/api/v1/jobs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(details)
