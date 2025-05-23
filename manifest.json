@@ -1,13 +1,19 @@
 {
   "manifest_version": 3,
-  "name": "Wynisco Widget",
+  "name": "Wynisco Extension",
   "version": "1.0",
+  "permissions": [
+    "storage"
+  ],
   "description": "Saves Job listings to CSV",
   "content_scripts": [
     {
       "matches": [
         "https://www.linkedin.com/*",
-        "https://*.indeed.com/*"
+        "https://*.indeed.com/*",
+        "https://jobright.ai/*",
+        "https://www.simplyhired.co.in/*",
+        "https://www.simplyhired.com/*"
       ],
       "js": ["content.js"],
       "css": ["content.css"]
@@ -22,14 +28,17 @@
       "48": "icon48.png",
       "128": "icon128.png"
     },
-    "default_title": "Wynisco Widget"
+    "default_title": "Wynisco Extension"
   },
   "web_accessible_resources": [
     {
       "resources": ["icon-round.png"],
       "matches": [
           "https://www.linkedin.com/*",
-          "https://*.indeed.com/*"
+          "https://*.indeed.com/*",
+          "https://jobright.ai/*",
+        "https://www.simplyhired.co.in/*",
+        "https://www.simplyhired.com/*"
         ],
       "use_dynamic_url": true
     }
