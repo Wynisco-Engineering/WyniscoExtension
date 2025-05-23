@@ -2,6 +2,9 @@
   "manifest_version": 3,
   "name": "Wynisco Extension",
   "version": "1.0",
+  "permissions": [
+    "storage"
+  ],
   "description": "Saves Job listings to CSV",
   "content_scripts": [
     {
