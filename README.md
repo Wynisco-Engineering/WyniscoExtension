@@ -39,7 +39,7 @@ For now, you can:
 ![devmode](https://github.com/Wynisco-Engineering/WyniscoExtension/blob/52af058f50a545031ae4f46ee6f0976795e1bf5d/readmeimages/chromedev.png)
 
 ### 3. Load unpacked and then select the downloaded extension 
-![import](https://github.com/Wynisco-Engineering/WyniscoExtension/blob/52af058f50a545031ae4f46ee6f0976795e1bf5d/readmeimages/upload.png)
+![import](https://github.com/Wynisco-Engineering/WyniscoExtension/blob/03be22c1fe9f664fcc016bfcadab66d16747f108/readmeimages/upload.png)
 
 ### 4. Fill in `scraped_by` Field
 ![Extension Button](https://github.com/Wynisco-Engineering/WyniscoExtension/blob/526e43940eb43cab1071c9c6165b6d617debdc17/readmeimages/upload.png)
