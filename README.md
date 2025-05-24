@@ -33,14 +33,14 @@ For now, you can:
 ## 📸 Screenshots
 
 ### 1. Download Extension
-![download page](https://raw.githubusercontent.com/Wynisco-Engineering/WyniscoExtension/development/readmeimages/download.png)
+![download page](https://github.com/Wynisco-Engineering/WyniscoExtension/blob/52af058f50a545031ae4f46ee6f0976795e1bf5d/readmeimages/download.png)
 
 ### 2. Turn on developer mode
-![devmode](https://raw.githubusercontent.com/Wynisco-Engineering/WyniscoExtension/development/readmeimages/chromedev.png)
+![devmode](https://github.com/Wynisco-Engineering/WyniscoExtension/blob/52af058f50a545031ae4f46ee6f0976795e1bf5d/readmeimages/chromedev.png)
 
 ### 3. Load unpacked and then select the downloaded extension 
-![import](https://raw.githubusercontent.com/Wynisco-Engineering/WyniscoExtension/development/readmeimages/image.png)
+![import](https://github.com/Wynisco-Engineering/WyniscoExtension/blob/52af058f50a545031ae4f46ee6f0976795e1bf5d/readmeimages/upload.png)
 
 ### 4. Fill in `scraped_by` Field
-![Extension Button](https://raw.githubusercontent.com/Wynisco-Engineering/WyniscoExtension/development/readmeimages/edit_scrapedby.png)
+![Extension Button](https://github.com/Wynisco-Engineering/WyniscoExtension/blob/52af058f50a545031ae4f46ee6f0976795e1bf5d/readmeimages/edit_scrapedby.png)
 
