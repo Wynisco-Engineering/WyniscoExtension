@@ -164,7 +164,7 @@ function canonicalSimplyHiredJobUrl(url) {
             job_title: jobTitle,
             state: jobLocation,
             city: jobLocation,
-            // employer: employer,
+            employer: employer,
             job_description: description,
             job_url: jobUrl,
             source: 'LinkedinExtension'
@@ -184,7 +184,7 @@ function canonicalSimplyHiredJobUrl(url) {
             job_title: jobTitle,
             state: jobLocation,
             city: jobLocation,
-            // employer: employer,
+            employer: employer,
             job_description: description,
             job_url: jobUrl,
             source: 'IndeedExtension'
@@ -215,7 +215,7 @@ function canonicalSimplyHiredJobUrl(url) {
             job_title: jobTitle,
             state: jobLocation,
             city: jobLocation,
-            // employer: employer,
+            employer: employer,
             job_description: description,
             job_url: jobUrl,
             source: 'JobRightExtension'
@@ -253,7 +253,7 @@ function canonicalSimplyHiredJobUrl(url) {
             job_title: jobTitle,
             state: jobLocation,
             city: jobLocation,
-            // employer: employer,
+            employer: employer,
             job_description: description,
             job_url: jobUrl,
             source: 'SimplyHiredExtension'
@@ -261,7 +261,10 @@ function canonicalSimplyHiredJobUrl(url) {
     }   
 })();
 
-function sendJobToBackend(details) {
+async function sendJobToBackend(details) {
+    const employerResponse = await fetch(`https://backend-dot-student-marketing-operations.el.r.appspot.com/api/v1/employers/find-or-create/${encodeURIComponent(details.employer)}`);
+    const employer = await employerResponse.json();
+    details.employer_id = employer.id;
     console.log(details)
     fetch('https://backend-dot-student-marketing-operations.el.r.appspot.com/api/v1/jobs', {
         method: 'POST',
