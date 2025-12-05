@@ -50,6 +50,16 @@ function canonicalSimplyHiredJobUrl(url) {
 
     if (document.getElementById('job-btn-container')) return;
 
+    const btn = document.createElement('button');
+    btn.id = 'fixed-right-image-btn';
+    btn.title = 'Append job details to DB';
+    btn.innerHTML = `<img src="${chrome.runtime.getURL('icon-round.png')}" alt="Send" style="width:32px;height:32px;pointer-events:none;">`;
+
+    const editScrapedByBtn = document.createElement('button');
+    editScrapedByBtn.id = 'edit-scraped-by-btn';
+    editScrapedByBtn.title = 'Edit Scraped By';
+    editScrapedByBtn.textContent = 'Edit Scraped By';
+
     const editAuthTokenBtn = document.createElement('button');
     editAuthTokenBtn.id = 'edit-auth-token-btn';
     editAuthTokenBtn.title = 'Edit Auth Token';
