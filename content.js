@@ -50,46 +50,24 @@ function canonicalSimplyHiredJobUrl(url) {
 
     if (document.getElementById('job-btn-container')) return;
 
-    function createButtonContainer(mainBtn, editBtn) {
-        const container = document.createElement('div');
-        container.id = 'job-btn-container';
-        container.className = 'job-btn-container'; 
-
-        editBtn.className = 'job-download-btn';
-        editBtn.innerHTML = `Edit Scraped By`;
-
-        mainBtn.className = 'job-main-btn';
-
-        container.onmouseenter = () => {
-            editBtn.classList.add('visible');
-        };
-        container.onmouseleave = () => {
-            editBtn.classList.remove('visible');
-        };
-
-        container.appendChild(editBtn);
-        container.appendChild(mainBtn);
-        document.body.appendChild(container);
-    }
-
-    const btn = document.createElement('button');
-    btn.id = 'fixed-right-image-btn';
-    btn.title = 'Append job details to DB';
-    btn.innerHTML = `<img src="${chrome.runtime.getURL('icon-round.png')}" alt="Send" style="width:32px;height:32px;pointer-events:none;">`;
-
-    const editScrapedByBtn = document.createElement('button');
-    editScrapedByBtn.id = 'edit-scraped-by-btn';
-    editScrapedByBtn.title = 'Edit Scraped By';
-    editScrapedByBtn.textContent = 'Edit Scraped By';
+    const editAuthTokenBtn = document.createElement('button');
+    editAuthTokenBtn.id = 'edit-auth-token-btn';
+    editAuthTokenBtn.title = 'Edit Auth Token';
+    editAuthTokenBtn.textContent = 'Edit Auth Token';
+    editAuthTokenBtn.className = 'job-download-btn'; // Re-use same class for styling
 
     let scrapedBy = '';
+    let authToken = '';
 
-    chrome.storage.local.get(['scraped_by'], function(result) {
+    chrome.storage.local.get(['scraped_by', 'auth_token'], function(result) {
         scrapedBy = result.scraped_by || '';
+        authToken = result.auth_token || '';
     });
+
     btn.onclick = () => {
-        chrome.storage.local.get(['scraped_by'], function(result) {
+        chrome.storage.local.get(['scraped_by', 'auth_token'], function(result) {
             scrapedBy = result.scraped_by || '';
+            authToken = result.auth_token || '';
             
             if (hostname.includes('linkedin.com')) {
                 const details = extractLinkedInJobDetails();
@@ -101,7 +79,7 @@ function canonicalSimplyHiredJobUrl(url) {
                 details.employer_id=1;
                 details.recruiter_info_avaiable = false;
                 details.notes = ""
-                sendJobToBackend(details);
+                sendJobToBackend(details, authToken);
             } else if (hostname.includes('indeed.com')) {
                 const details = extractIndeedJobDetails();
                 if (!details.job_title || !details.job_url) {
@@ -112,7 +90,7 @@ function canonicalSimplyHiredJobUrl(url) {
                 details.employer_id=1;
                 details.recruiter_info_avaiable = false;
                 details.notes = ""
-                sendJobToBackend(details);
+                sendJobToBackend(details, authToken);
             } else if (hostname.includes('jobright.ai')){
                 const details = extractJobRightJobDetails();
                 if (!details.job_title || !details.job_url) {
@@ -123,7 +101,7 @@ function canonicalSimplyHiredJobUrl(url) {
                 details.employer_id=1;
                 details.recruiter_info_avaiable = false;
                 details.notes = ""
-                sendJobToBackend(details);
+                sendJobToBackend(details, authToken);
             } else if(hostname.includes('simplyhired')){
                 const details = extractSimplyHiredJobDetails();
                 if (!details.job_title || !details.job_url) {
@@ -134,7 +112,7 @@ function canonicalSimplyHiredJobUrl(url) {
                 details.employer_id=1;
                 details.recruiter_info_avaiable = false;
                 details.notes = ""
-                sendJobToBackend(details);
+                sendJobToBackend(details, authToken);
             }
         });
     };
@@ -150,7 +128,50 @@ function canonicalSimplyHiredJobUrl(url) {
             }
         });
     };
-    createButtonContainer(btn, editScrapedByBtn);
+
+    editAuthTokenBtn.onclick = () => {
+        chrome.storage.local.get(['auth_token'], function(result) {
+            const current = result.auth_token || '';
+            const updated = prompt("Enter Auth Token (copy from Wynisco App Header):", current);
+            if (updated !== null) {
+                chrome.storage.local.set({ auth_token: updated });
+                authToken = updated;
+                alert(`Auth Token updated!`);
+            }
+        });
+    };
+
+    // Helper to append multiple buttons
+    function createButtonContainer(mainBtn, ...extraBtns) {
+        const container = document.createElement('div');
+        container.id = 'job-btn-container';
+        container.className = 'job-btn-container'; 
+
+        mainBtn.className = 'job-main-btn';
+
+        extraBtns.forEach(b => {
+             b.style.display = 'none'; // Initially hidden
+             container.appendChild(b);
+        });
+
+        container.onmouseenter = () => {
+            extraBtns.forEach(b => {
+                b.style.display = 'block';
+                b.classList.add('visible');
+            });
+        };
+        container.onmouseleave = () => {
+             extraBtns.forEach(b => {
+                b.style.display = 'none';
+                b.classList.remove('visible');
+            });
+        };
+
+        container.appendChild(mainBtn);
+        document.body.appendChild(container);
+    }
+
+    createButtonContainer(btn, editScrapedByBtn, editAuthTokenBtn);
 
     function extractLinkedInJobDetails(){
         const jobTitle = document.querySelector('.job-details-jobs-unified-top-card__job-title h1 a')?.textContent.trim()
@@ -261,21 +282,42 @@ function canonicalSimplyHiredJobUrl(url) {
     }   
 })();
 
-async function sendJobToBackend(details) {
-    const employerResponse = await fetch(`https://backend-dot-student-marketing-operations.el.r.appspot.com/api/v1/employers/find-or-create/${encodeURIComponent(details.employer)}`);
-    const employer = await employerResponse.json();
-    details.employer_id = employer.id;
-    console.log(details)
-    fetch('https://backend-dot-student-marketing-operations.el.r.appspot.com/api/v1/jobs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(details)
-    })
-    .then(response => {
-        if (!response.ok) throw new Error('Failed to save job');
-        alert('Job details sent to backend!');
-    })
-    .catch(err => {
-        alert('Error sending job: ' + err.message);
-    });
+async function sendJobToBackend(details, authToken) {
+    const headers = { 'Content-Type': 'application/json' };
+    if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+    }
+
+    try {
+        const employerResponse = await fetch(`https://backend-dot-student-marketing-operations.el.r.appspot.com/api/v1/employers/find-or-create/${encodeURIComponent(details.employer)}`, {
+            headers: headers
+        });
+        
+        if (employerResponse.status === 401) {
+             alert('Authentication failed. Please update your Auth Token in the extension.');
+             return;
+        }
+
+        const employer = await employerResponse.json();
+        details.employer_id = employer.id;
+        console.log(details)
+        
+        fetch('https://backend-dot-student-marketing-operations.el.r.appspot.com/api/v1/jobs', {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(details)
+        })
+        .then(response => {
+            if (response.status === 401) {
+                throw new Error('Authentication failed. Please update your Auth Token.');
+            }
+            if (!response.ok) throw new Error('Failed to save job');
+            alert('Job details sent to backend!');
+        })
+        .catch(err => {
+            alert('Error sending job: ' + err.message);
+        });
+    } catch (err) {
+        alert('Error finding/creating employer: ' + err.message);
+    }
 }
