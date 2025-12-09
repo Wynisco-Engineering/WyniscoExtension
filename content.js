@@ -298,6 +298,17 @@ async function sendJobToBackend(details, authToken) {
         headers['Authorization'] = `Bearer ${authToken}`;
     }
 
+    // Fallback if employer is missing
+    if (!details.employer) {
+        const userInput = prompt("Could not extract employer name. Please enter it:");
+        if (userInput) {
+            details.employer = userInput.trim();
+        } else {
+            alert("Employer name is required to save the job.");
+            return;
+        }
+    }
+
     try {
         const employerResponse = await fetch(`https://backend-dot-student-marketing-operations.el.r.appspot.com/api/v1/employers/find-or-create/${encodeURIComponent(details.employer)}`, {
             headers: headers
@@ -308,9 +319,16 @@ async function sendJobToBackend(details, authToken) {
              return;
         }
 
+        if (!employerResponse.ok) {
+             // Handle 404 or other errors if find-or-create fails in a way we didn't expect
+             const txt = await employerResponse.text();
+             throw new Error(`Failed to find/create employer. Status: ${employerResponse.status}. Msg: ${txt}`);
+        }
+
         const employer = await employerResponse.json();
         details.employer_id = employer.id;
-        console.log(details)
+        
+        console.log("Sending job with details:", details);
         
         fetch('https://backend-dot-student-marketing-operations.el.r.appspot.com/api/v1/jobs', {
             method: 'POST',
