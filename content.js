@@ -215,6 +215,7 @@ function canonicalSimplyHiredJobUrl(url) {
             job_title: jobTitle,
             state: jobLocation,
             city: jobLocation,
+            location: jobLocation,
             employer: employer,
             job_description: description,
             job_url: jobUrl,
@@ -223,33 +224,80 @@ function canonicalSimplyHiredJobUrl(url) {
     }
 
     function extractJobRightJobDetails() {
-        const jobTitle = document.querySelector('.index_job-title__sStdA')?.textContent.trim() || '';
-        const employer = document.querySelector('.index_company-row__vOzgg strong')?.textContent.trim() || '';
-        const jobLocation = document.querySelector('.index_job-metadata-item__Wv_Xh img[alt="position"] + span')?.textContent.trim() || '';
-        
-        let overview = document.querySelector('.index_company-summary__8nWbU')?.innerText.trim() || '';
-        let responsibilityBullets = Array.from(document.querySelectorAll('section .index_listText__ENCyh'))
-        .map(el => '• ' + el.textContent.trim()).join('\n') || '';
+        const jobTitle =
+          document
+            .querySelector('[class*="index_job-title"]')
+            ?.textContent.trim() || "";
+        const employer =
+          document
+            .querySelector('[class*="index_company-name"]')
+            ?.textContent.trim() || "";
+        const jobLocation =
+          document
+            .querySelector(
+              '[class*="index_job-metadata-item"] img[alt="position"] + span',
+            )
+            ?.textContent.trim() || "";
+        let overview =
+          document
+            .querySelector('[class*="index_company-summary"]')
+            ?.innerText.trim() || "";
+        const responsibilitiesSection = Array.from(
+          document.querySelectorAll("section"),
+        ).find(
+          (sec) =>
+            sec.querySelector("h2")?.textContent.trim() === "Responsibilities",
+        );
 
-        let qualifications = '';
-        const qualificationBlocks = document.querySelectorAll('section#index_skills-section .index_listText__ENCyh')  || '';
-        if(qualificationBlocks.length>0){
-            qualifications = '\nQualifications:\n' + Array.from(qualificationBlocks).map(el => '• ' + el.textContent.trim()).join('\n');
+        let responsibilities = "";
+        if (responsibilitiesSection) {
+          responsibilities = Array.from(
+            responsibilitiesSection.querySelectorAll(
+              '[class*="index_listText"]',
+            ),
+          )
+            .map((el) => "• " + el.textContent.trim())
+            .join("\n");
         }
 
-        let description = '';
-        if (overview) description += overview + '\n\n';
-        if (responsibilityBullets) description += 'Responsibilities:\n' + responsibilityBullets + '\n\n';
-        if (qualifications) description += qualifications;
+        let skills = Array.from(
+          document.querySelectorAll(
+            '#skills-section [class*="qualification-tag"]',
+          ),
+        )
+          .map((el) => el.textContent.trim())
+          .join(", ");
+        let qualifications = Array.from(
+          document.querySelectorAll(
+            '#skills-section [class*="index_listText"]',
+          ),
+        )
+          .map((el) => "• " + el.textContent.trim())
+          .join("\n");
+
+        let description = "";
+        if (overview) {
+          description += overview + "\n\n";
+        }
+        if (responsibilities) {
+          description += "Responsibilities:\n" + responsibilities + "\n\n";
+        }
+        if (skills) {
+          description += "Skills:\n" + skills + "\n\n";
+        }
+        if (qualifications) {
+          description += "Qualifications:\n" + qualifications;
+        }
         const jobUrl = window.location.href;
         return {
-            job_title: jobTitle,
-            state: jobLocation,
-            city: jobLocation,
-            employer: employer,
-            job_description: description,
-            job_url: jobUrl,
-            source: 'JobRightExtension'
+          job_title: jobTitle,
+          state: jobLocation,
+          city: jobLocation,
+          location: jobLocation,
+          employer: employer,
+          job_description: description,
+          job_url: jobUrl,
+          source: "JobRightExtension",
         };
     }
 
@@ -279,7 +327,7 @@ function canonicalSimplyHiredJobUrl(url) {
         }
         const description = extractJobDescription();
         const jobUrl = canonicalSimplyHiredJobUrl(window.location.href)
-        
+
         return {
             job_title: jobTitle,
             state: jobLocation,
