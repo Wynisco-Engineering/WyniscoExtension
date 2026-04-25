@@ -279,11 +279,12 @@ function canonicalSimplyHiredJobUrl(url) {
         }
         const description = extractJobDescription();
         const jobUrl = canonicalSimplyHiredJobUrl(window.location.href)
-
+        
         return {
             job_title: jobTitle,
             state: jobLocation,
             city: jobLocation,
+            location: jobLocation,
             employer: employer,
             job_description: description,
             job_url: jobUrl,
