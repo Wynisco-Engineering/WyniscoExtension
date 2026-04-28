@@ -384,11 +384,16 @@ async function sendJobToBackend(details, authToken) {
             headers: headers,
             body: JSON.stringify(details)
         })
-        .then(response => {
+        .then(async response => {
             if (response.status === 401) {
                 throw new Error('Authentication failed. Please update your Auth Token.');
             }
-            if (!response.ok) throw new Error('Failed to save job');
+            if (!response.ok) {
+                const json = await response.json();
+                const errText = json?.error || json?.message || response.statusText || 'Unknown error';
+                alert(errText || 'Failed to save job.');
+                return;
+            }
             alert('Job details sent to backend!');
         })
         .catch(err => {
