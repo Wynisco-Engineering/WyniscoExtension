@@ -1,20 +1,38 @@
 
-function canonicalLinkedInJobUrl(url) {
+function getLinkedInJobIdFromUrl(url) {
     try {
         const u = new URL(url);
-        const viewMatch = u.pathname.match(/^\/jobs\/view\/(\d+)/);
-        if (viewMatch) {
-            return `https://www.linkedin.com/jobs/view/${viewMatch[1]}/`;
+        const m = u.pathname.match(/\/jobs\/view\/(\d+)/);
+        if (m) return m[1];
+        if (u.pathname.startsWith('/jobs/')) {
+            const cur = u.searchParams.get('currentJobId');
+            if (cur) return cur;
         }
-        if (u.pathname.startsWith('/jobs/search/')) {
-            const jobId = u.searchParams.get('currentJobId');
-            if (jobId) {
-                return `https://www.linkedin.com/jobs/view/${jobId}/`;
-            }
-        }
-    } catch (e) {
-        console.error("Error in canonicalLinkedInJobUrl:", e);
+    } catch (e) {}
+    return null;
+}
+
+function getLinkedInJobId() {
+    let id = getLinkedInJobIdFromUrl(window.location.href);
+    if (id) return id;
+    try { id = getLinkedInJobIdFromUrl(window.top.location.href); if (id) return id; } catch (e) {}
+    try { id = getLinkedInJobIdFromUrl(document.referrer); if (id) return id; } catch (e) {}
+    const link = document.querySelector('a[href*="/jobs/view/"]');
+    if (link) {
+        const m = link.getAttribute('href').match(/\/jobs\/view\/(\d+)/);
+        if (m) return m[1];
     }
+    const compKey = document.querySelector('[componentkey*="JobDetails_"]');
+    if (compKey) {
+        const m = compKey.getAttribute('componentkey').match(/(\d{6,})/);
+        if (m) return m[1];
+    }
+    return null;
+}
+
+function canonicalLinkedInJobUrl(url) {
+    const id = getLinkedInJobId();
+    if (id) return `https://www.linkedin.com/jobs/view/${id}/`;
     return url;
 }
 
@@ -58,13 +76,14 @@ function canonicalSimplyHiredJobUrl(url) {
     const editScrapedByBtn = document.createElement('button');
     editScrapedByBtn.id = 'edit-scraped-by-btn';
     editScrapedByBtn.title = 'Edit Scraped By';
-    editScrapedByBtn.textContent = 'Edit Scraped By';
+    editScrapedByBtn.className = 'job-icon-btn';
+    editScrapedByBtn.textContent = 'Scraped By';
 
     const editAuthTokenBtn = document.createElement('button');
     editAuthTokenBtn.id = 'edit-auth-token-btn';
     editAuthTokenBtn.title = 'Edit Auth Token';
-    editAuthTokenBtn.textContent = 'Edit Auth Token';
-    editAuthTokenBtn.className = 'job-download-btn'; // Re-use same class for styling
+    editAuthTokenBtn.className = 'job-icon-btn';
+    editAuthTokenBtn.textContent = 'Auth Token';
 
     let scrapedBy = '';
     let authToken = '';
@@ -183,22 +202,93 @@ function canonicalSimplyHiredJobUrl(url) {
 
     createButtonContainer(btn, editScrapedByBtn, editAuthTokenBtn);
 
-    function extractLinkedInJobDetails(){
-        const jobTitle = document.querySelector('.job-details-jobs-unified-top-card__job-title h1 a')?.textContent.trim()
-            || document.querySelector('.job-details-jobs-unified-top-card__job-title h1')?.textContent.trim() || '';
-        const employer = document.querySelector('div.job-details-jobs-unified-top-card__company-name a')?.textContent.trim() || '';
-        const jobLocation = document.querySelector('div.job-details-jobs-unified-top-card__tertiary-description-container span.tvm__text--low-emphasis')?.textContent.trim() || '';
-        const description = document.querySelector('div.jobs-description__content')?.textContent.trim() || '';
+    function extractLinkedInJobDetails() {
+        const titleParts = document.title.match(
+        /^(.+?)\s*\|\s*(.+?)\s*\|\s*LinkedIn\s*$/,
+        );
+
+        let jobTitle =
+        document
+            .querySelector(".job-details-jobs-unified-top-card__job-title h1 a")
+            ?.textContent.trim() ||
+        document
+            .querySelector(".job-details-jobs-unified-top-card__job-title h1")
+            ?.textContent.trim() ||
+        "";
+        if (!jobTitle && titleParts) jobTitle = titleParts[1].trim();
+
+        const companyLink = document.querySelector('div.job-details-jobs-unified-top-card__company-name a')
+            || document.querySelector('a[href*="/company/"][href*="/life/"]')
+            || document.querySelector('a[href*="/company/"]');
+        let employer = companyLink?.textContent.trim() || "";
+        if (!employer && titleParts) employer = titleParts[2].trim();
+
+        let employerLinkedinUrl = "";
+        if (companyLink) {
+            const slugMatch = companyLink.getAttribute('href')?.match(/\/company\/([^\/?#]+)/);
+            if (slugMatch) {
+                employerLinkedinUrl = `https://www.linkedin.com/company/${slugMatch[1]}/`;
+            }
+        }
+
+        let jobLocation =
+        document
+            .querySelector(
+            "div.job-details-jobs-unified-top-card__tertiary-description-container span.tvm__text--low-emphasis",
+            )
+            ?.textContent.trim() || "";
+        if (!jobLocation) {
+        const detailsScreen =
+            document.querySelector('[data-sdui-screen*="JobDetails"]') || document;
+        for (const p of detailsScreen.querySelectorAll("p")) {
+            const t = p.textContent.trim();
+            if (t.includes(" · ") && !p.querySelector("a")) {
+            jobLocation = t.split(" · ")[0].trim();
+            break;
+            }
+        }
+        }
+
+        function extractTextWithBreaks(el) {
+            if (!el) return "";
+            const clone = el.cloneNode(true);
+            clone.querySelectorAll("br").forEach((br) => br.replaceWith("\n"));
+            clone.querySelectorAll("li").forEach((li) => {
+                li.prepend("• ");
+                li.append("\n");
+            });
+            clone.querySelectorAll("p, div, h1, h2, h3, h4, ul, ol").forEach((b) => b.append("\n"));
+            return clone.textContent.replace(/\n{3,}/g, "\n\n").trim();
+        }
+
+        let description = extractTextWithBreaks(
+            document.querySelector('[data-testid="expandable-text-box"]'),
+        );
+        if (!description) {
+            description = extractTextWithBreaks(
+                document.querySelector("div.jobs-description__content"),
+            );
+        }
+
+        const descriptionPrefix = "About the job";
+        if (description.startsWith(descriptionPrefix)) {
+        description = description.substring(descriptionPrefix.length);
+        }
+        const descriptionSuffix = "… more";
+        description = description.replaceAll(descriptionSuffix, "");
+
         const jobUrl = canonicalLinkedInJobUrl(window.location.href);
 
         return {
-            job_title: jobTitle,
-            state: jobLocation,
-            city: jobLocation,
-            employer: employer,
-            job_description: description,
-            job_url: jobUrl,
-            source: 'LinkedinExtension'
+        job_title: jobTitle,
+        location: jobLocation,
+        state: jobLocation,
+        city: jobLocation,
+        employer: employer,
+        employer_linkedin_url: employerLinkedinUrl,
+        job_description: description.trim(),
+        job_url: jobUrl,
+        source: "LinkedinExtension",
         };
     }
 
@@ -342,6 +432,7 @@ function canonicalSimplyHiredJobUrl(url) {
 })();
 
 async function sendJobToBackend(details, authToken) {
+    const BASE_URL = "https://backend-dot-student-marketing-operations.el.r.appspot.com"
     const headers = { 'Content-Type': 'application/json' };
     if (authToken) {
         headers['Authorization'] = `Bearer ${authToken}`;
@@ -359,17 +450,22 @@ async function sendJobToBackend(details, authToken) {
     }
 
     try {
-        const employerResponse = await fetch(`https://backend-dot-student-marketing-operations.el.r.appspot.com/api/v1/employers/find-or-create/${encodeURIComponent(details.employer)}`, {
-            headers: headers
-        });
-        
+        const linkedinParam = details.employer_linkedin_url
+            ? `?linkedin_url=${encodeURIComponent(details.employer_linkedin_url)}`
+            : '';
+        delete details.employer_linkedin_url;
+
+        const employerResponse = await fetch(
+            `${BASE_URL}/api/v1/employers/find-or-create/${encodeURIComponent(details.employer)}${linkedinParam}`,
+            { headers: headers }
+        );
+
         if (employerResponse.status === 401) {
              alert('Authentication failed. Please update your Auth Token in the extension.');
              return;
         }
 
         if (!employerResponse.ok) {
-             // Handle 404 or other errors if find-or-create fails in a way we didn't expect
              const txt = await employerResponse.text();
              throw new Error(`Failed to find/create employer. Status: ${employerResponse.status}. Msg: ${txt}`);
         }
@@ -379,7 +475,7 @@ async function sendJobToBackend(details, authToken) {
         
         console.log("Sending job with details:", details);
         
-        fetch('https://backend-dot-student-marketing-operations.el.r.appspot.com/api/v1/jobs', {
+        fetch(`${BASE_URL}/api/v1/jobs/`, {
             method: 'POST',
             headers: headers,
             body: JSON.stringify(details)
