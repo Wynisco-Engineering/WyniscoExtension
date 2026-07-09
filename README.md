@@ -1,3 +1,14 @@
+# Retired Extension
+
+**This extension is retired. Use Wynisco+ from Wynisco-Engineering/wynisco-plus-extension.**
+
+Do not install, distribute, or use this package for active Wynisco extension
+work. The content below is preserved only as historical documentation.
+
+---
+
+## Historical README
+
 # Wynisco Job Scraper Extension
 
 A browser extension to **scrape job listings** from:
@@ -43,4 +54,3 @@ For now, you can:
 
 ### 4. Fill in `scraped_by` Field
 ![Extension Button](https://github.com/Wynisco-Engineering/WyniscoExtension/blob/52af058f50a545031ae4f46ee6f0976795e1bf5d/readmeimages/edit_scrapedby.png)
-
